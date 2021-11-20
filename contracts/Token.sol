@@ -4,8 +4,10 @@ pragma solidity ^0.8.5;
 import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import '@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol';
 import "hardhat/console.sol";
@@ -18,9 +20,10 @@ contract Token is Initializable, OwnableUpgradeable,
     using SafeMathUpgradeable for uint256;
 
     // ==========State variables====================================
-    mapping(address => uint256) public vaultBalances;
+    mapping(address => uint256) public ethBalances;
 
     // ==========Events=============================================
+    event TokenERC20Received(address indexed recipient, uint256 depositedAmt, uint256 receivedAmt, uint256 currentTimestamp);
 
     // ==========Constructor========================================
     /// @notice replacement of `constructor` for upgradeable contracts
@@ -41,13 +44,16 @@ contract Token is Initializable, OwnableUpgradeable,
     }
 
     // ==========Functions==========================================
-    function receive() external payable {
+    receive() external payable {
+        uint256 userETHBalance = ethBalances[_msgSender()];
         // update balance of depositor
-        vaultBalances[_msgSender()] = msg.value;
+        ethBalances[_msgSender()] = userETHBalance.add(msg.value);
 
         // mint equivalent amount of ERC20 tokens
         bool success = mint(_msgSender(), msg.value);               // parse in wei
         require(success, "Receive: Token Minting failed during deposit.");
+
+        emit TokenERC20Received(_msgSender(), msg.value, msg.value, block.timestamp);
     }
 
     
