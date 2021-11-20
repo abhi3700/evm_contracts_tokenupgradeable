@@ -78,6 +78,13 @@ const config: HardhatUserConfig = {
       accounts: [`0x${DEPLOYER_PRIVATE_KEY}`],
       // accounts: ["0xcf2a6872928392175e383fc10f93c13eab0c050bd4dbd6b45201fad5bd9409b7"],
     },
+    kovan: {
+      url: `https://kovan.infura.io/v3/${INFURA_API_KEY}`,
+      // url: "https://rinkeby.infura.io/v3/24d441e3175047bfb04c60e8221878c9",
+      chainId: 42,
+      accounts: [`0x${DEPLOYER_PRIVATE_KEY}`],
+      // accounts: ["0xcf2a6872928392175e383fc10f93c13eab0c050bd4dbd6b45201fad5bd9409b7"],
+    },
     // rinkeby: createTestnetConfig("rinkeby"),
   },
   solidity: {
