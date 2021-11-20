@@ -10,12 +10,9 @@ import '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import '@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol';
 import "hardhat/console.sol";
 
-contract Token is Initializable, OwnableUpgradeable, 
+contract Token2 is Initializable, OwnableUpgradeable, 
         ERC20Upgradeable, PausableUpgradeable, 
         ERC20BurnableUpgradeable, ReentrancyGuardUpgradeable {
-
-    using AddressUpgradeable for address;
-    using SafeMathUpgradeable for uint256;
 
     // ==========State variables====================================
     mapping(address => uint256) public vaultBalances;
@@ -31,10 +28,8 @@ contract Token is Initializable, OwnableUpgradeable,
     }
 
     // ==========Modifiers==========================================
-    /**
-     * @dev Throws if called by any account other than the owner.
-     *      Also, added vault contract address into permission for minting.
-     */
+    /// @dev Throws if called by any account other than the owner.
+    ///      Also, added vault contract address into permission for minting.
     modifier onlyOwnerM() {
         require(owner() == _msgSender() || address(this) == _msgSender(), "Ownable: caller is not the owner or vault address");
         _;
@@ -47,17 +42,15 @@ contract Token is Initializable, OwnableUpgradeable,
 
         // mint equivalent amount of ERC20 tokens
         bool success = mint(_msgSender(), msg.value);               // parse in wei
-        require(success, "Receive: Token Minting failed during deposit.");
+        require(success, "Receive: Token Minting failed");
     }
-
     
-    /**
-     * @notice Mints given amount of tokens to recipient
-     * @dev only owner can call this mint function
-     * @param recipient address of account to receive the tokens
-     * @param amount amount of tokens to mint
-     * @return true if the function executes
-     */
+    
+    /// @notice Mints given amount of tokens to recipient
+    /// @dev only owner can call this mint function
+    /// @param recipient address of account to receive the tokens
+    /// @param amount amount of tokens to mint
+    /// @return true if the function succeeds
     function mint(address recipient, uint256 amount) 
         public 
         payable 
@@ -74,10 +67,21 @@ contract Token is Initializable, OwnableUpgradeable,
 
 
     /// @notice burn function
-    /// @param from token owner address
+    /// @param from token holder address
     /// @param amount mint amount
+    /// @return true if the function succeeds
     function burn(address from, uint256 amount) public whenNotPaused nonReentrant returns (bool) {
         _burn(from, amount);
+
+        // calculate the transfer amount
+        uint256 transferAmt = 0.9.mul(amount);
+
+        // update the vault balance
+        vaultBalances[_msgSender()] = vaultBalances[_msgSender()].sub(transferAmt);
+
+        // transfer 90% of ETH (in wei) corresponding to repayment amount
+        (bool sent, /*bytes memory data*/) = _msgSender().call{value: transferAmt}("");     // parse in wei
+        require(sent, "Burn: ETH Token Transfer failed");
 
         return true;
     }
